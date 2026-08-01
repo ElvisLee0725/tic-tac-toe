@@ -34,19 +34,28 @@ class TicTacToe:
 
         self.board_frame = tk.Frame(self.board_container)
         self.board_frame.place(relx=0.5, rely=0.5, anchor="center")
+        self.board_frame.grid_propagate(False)
         for i in range(3):
             self.board_frame.grid_rowconfigure(i, weight=1)
             self.board_frame.grid_columnconfigure(i, weight=1)
 
+        # Each cell is a fixed-size frame holding the button, so a
+        # button's text changing (e.g. "" -> "X") can never nudge the
+        # grid's sizing and shift the cell.
+        self.cell_frames = []
         self.buttons = []
         for i in range(9):
+            cell = tk.Frame(self.board_frame, highlightthickness=0)
+            cell.grid(row=i // 3, column=i % 3, sticky="nsew")
+            cell.pack_propagate(False)
             button = tk.Button(
-                self.board_frame,
+                cell,
                 text="",
                 font=("Helvetica", 32),
                 command=lambda i=i: self.handle_click(i),
             )
-            button.grid(row=i // 3, column=i % 3, sticky="nsew")
+            button.pack(fill="both", expand=True)
+            self.cell_frames.append(cell)
             self.buttons.append(button)
 
         self.reset_button = tk.Button(
@@ -75,6 +84,10 @@ class TicTacToe:
             self.game_over = True
             self.highlight_winner(winning_line)
             self.status_label.config(text=f"Player {self.current_player} wins!")
+            # Force the board to redraw before the modal dialog steals
+            # focus, otherwise the final move/highlight can appear to
+            # not have rendered on macOS.
+            self.root.update_idletasks()
             messagebox.showinfo("Game Over", f"Player {self.current_player} wins!")
         elif "" not in self.board:
             self.game_over = True
@@ -91,8 +104,17 @@ class TicTacToe:
         return None
 
     def highlight_winner(self, line):
+        # Highlighting the button itself is unreliable on macOS's native
+        # Aqua theme (background color is ignored, and the highlight ring
+        # can stick around after being reset), so highlight the plain
+        # wrapping frame instead, which renders and resets predictably.
         for i in line:
-            self.buttons[i].config(bg="lightgreen")
+            self.buttons[i].config(fg="green")
+            self.cell_frames[i].config(
+                highlightbackground="green",
+                highlightcolor="green",
+                highlightthickness=4,
+            )
 
     def reset(self):
         self.board = [""] * 9
@@ -100,7 +122,9 @@ class TicTacToe:
         self.game_over = False
         self.status_label.config(text="Player X's turn")
         for button in self.buttons:
-            button.config(text="", bg="SystemButtonFace")
+            button.config(text="", fg="black")
+        for cell in self.cell_frames:
+            cell.config(highlightthickness=0)
 
 
 def main():
