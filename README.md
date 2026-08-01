@@ -2,6 +2,13 @@
 
 A simple 2-player Tic Tac Toe game with a Tkinter GUI.
 
+## Tech stack
+
+- **Language:** Python 3 (no third-party dependencies)
+- **UI:** [Tkinter](https://docs.python.org/3/library/tkinter.html), Python's built-in GUI toolkit
+  - `tkinter.Tk` / `tkinter.Frame` / `tkinter.Button` / `tkinter.Label` for the window and board
+  - `tkinter.messagebox` for the win/tie dialog
+
 ## How to play
 
 ```
